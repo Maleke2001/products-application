@@ -1,20 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
-import { Link } from 'react-router-dom';
+import {useDispatch, useSelector} from 'react-redux'
+import { Link, useNavigate } from 'react-router-dom';
+import { useLoginMutation } from '../slices/usersApiSlice';
+import { setCredentials } from '../slices/authSlice';
+import { toast } from 'react-toastify';
 
 const Signin = () => {
   // Initializing state for email and password
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // Submit handler to handle form submission
+
+  const navigate =useNavigate();
+  const dispatch = useDispatch();
+
+ 
+  const [login, { isLoading }] = useLoginMutation();
+
+  const { userInfo } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (userInfo) {
+      navigate('/dashboard');
+    }
+  }, [navigate, userInfo]);
+
   const submitHandler = async (e) => {
     e.preventDefault();
-    console.log('Email:', email);
-    console.log('Password:', password);
-    // Here you can call your API for authentication
+    try {
+      const res = await login({ email, password }).unwrap();
+      dispatch(setCredentials({ ...res }))
+      if(res) {
+        toast.success("Logged in")
+      }
+      navigate('/');
+      // Come came here
+    } catch (err) {
+
+    }
   };
 
+  
   return (
     <div>
     <Navbar/>
@@ -49,8 +76,8 @@ const Signin = () => {
             required
           />
         </div>
-
-       
+        {isLoading && <h2>Loading...</h2> }
+      
         <button
           type="submit"
           className="w-full p-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none"
